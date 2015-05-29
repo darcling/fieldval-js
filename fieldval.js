@@ -16,7 +16,7 @@ var FieldVal = (function(){
         return true;
     };
 
-    function FieldVal(validating, existing_error) {
+    function FieldVal(validating, existing_error, options) {
         var fv = this;
 
         fv.async_waiting = 0;
@@ -24,6 +24,7 @@ var FieldVal = (function(){
         fv.validating = validating;
         fv.invalid_keys = {};
         fv.recognized_keys = {};
+        fv.ignore_unrecognized = options.ignoreUnrecognized;
 
         //Top level errors - added using .error() 
         fv.errors = [];
@@ -372,24 +373,27 @@ var FieldVal = (function(){
         var returning_unrecognized = {};
         var returning_invalid = {};
 
-        //Iterate through manually unrecognized keys
-        var key;
-        for (key in fv.unrecognized_keys) {
-            /* istanbul ignore else */
-            if (fv.unrecognized_keys.hasOwnProperty(key)) {
-                returning_unrecognized[key] = fv.unrecognized_keys[key];
-            }
-        }
 
-        var auto_unrecognized = fv.get_unrecognized();
-        var i, auto_key;
-        for (i = 0; i < auto_unrecognized.length; i++) {
-            auto_key = auto_unrecognized[i];
-            returning_invalid[auto_key] = {
-                error_message: "Unrecognized field.",
-                error: FieldVal.FIELD_UNRECOGNIZED
-            };
-            has_error = true;
+        if(!fv.ignore_unrecognized) {
+            //Iterate through manually unrecognized keys
+            var key;
+            for (key in fv.unrecognized_keys) {
+                /* istanbul ignore else */
+                if (fv.unrecognized_keys.hasOwnProperty(key)) {
+                    returning_unrecognized[key] = fv.unrecognized_keys[key];
+                }
+            }
+
+            var auto_unrecognized = fv.get_unrecognized();
+            var i, auto_key;
+            for (i = 0; i < auto_unrecognized.length; i++) {
+                auto_key = auto_unrecognized[i];
+                returning_invalid[auto_key] = {
+                    error_message: "Unrecognized field.",
+                    error: FieldVal.FIELD_UNRECOGNIZED
+                };
+                has_error = true;
+            }
         }
 
         if (!is_empty(fv.invalid_keys)) {
